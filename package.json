@@ -1,0 +1,25 @@
+{
+  "name": "mcp-listas-v2",
+  "version": "2.0.0",
+  "description": "MCP Streamable HTTP server for Azure Table & Blob Storage",
+  "type": "module",
+  "main": "dist/src/functions/*.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "prestart": "npm run build",
+    "start": "func start"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.6.0",
+    "@azure/data-tables": "^13.3.0",
+    "@azure/storage-blob": "^12.24.0",
+    "@azure/identity": "^4.5.0",
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "@types/node": "^20.0.0"
+  }
+}
