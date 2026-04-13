@@ -1,13 +1,13 @@
 # mcp-listas-v2
 
-Servidor MCP sobre Azure Functions que expone 9 tools para trabajar con Azure Table Storage y Azure Blob Storage mediante Streamable HTTP.
+Servidor MCP sobre Azure Functions que expone un catalogo ampliado de tools para trabajar con Azure Table Storage, Blob Storage y contenedores mediante Streamable HTTP.
 
 El proyecto está pensado para desplegarse como endpoint MCP remoto y consumirse desde clientes compatibles como Copilot Studio.
 
 ## Resumen
 
 - Transporte MCP Streamable HTTP real sobre Azure Functions.
-- 9 tools para Table Storage y Blob Storage.
+- 35 tools para Table Storage, Blob Storage y contenedores.
 - Managed Identity en Azure.
 - Azurite para desarrollo local.
 - Despliegue automatizable con PowerShell.
@@ -21,18 +21,49 @@ Flujo básico:
 1. El cliente hace `POST` a `/api/mcp`.
 2. La Function adapta la request al transporte `WebStandardStreamableHTTPServerTransport` del SDK MCP.
 3. Se crea un `McpServer` stateless para esa petición.
-4. Las tools delegan en las librerías de acceso a Table Storage y Blob Storage.
+4. Las tools delegan en las librerías de acceso a Table Storage, Blob Storage y contenedores.
 5. La respuesta vuelve al cliente como respuesta MCP Streamable HTTP.
+
+Las tools `table.*` siguen la nomenclatura del MCP desplegado en Azure para mantener paridad entre el endpoint local y el remoto.
 
 ## Tools disponibles
 
+### Inventario
+
+- `storage.inspect`
+
 ### Table Storage
+
+- `table.list`
+- `table.createTable`
+- `table.deleteTable`
+- `table.create`
+- `table.upsert`
+- `table.read`
+- `table.exists`
+- `table.head`
+- `table.update`
+- `table.delete`
+- `table.query`
+- `table.scanPartition`
+- `table.queryByPrefix`
+- `table.deletePartition`
+- `table.batchUpsert`
+
+### Table Storage compatibilidad local
 
 - `table.create_entity`
 - `table.get_entity`
-- `table.query`
 - `table.update_entity`
 - `table.delete_entity`
+
+### Containers
+
+- `container.list`
+- `container.create`
+- `container.delete`
+- `container.exists`
+- `container.head`
 
 ### Blob Storage
 
@@ -40,6 +71,12 @@ Flujo básico:
 - `blob.download`
 - `blob.list`
 - `blob.delete`
+- `blob.exists`
+- `blob.head`
+- `blob.getProperties`
+- `blob.setMetadata`
+- `blob.copy`
+- `blob.move`
 
 ## Estructura del proyecto
 
@@ -120,7 +157,7 @@ Necesitas lo siguiente:
 npm install
 ```
 
-2. Crea `local.settings.json` a partir de `local.settings.example.json`.
+1. Crea `local.settings.json` a partir de `local.settings.example.json`.
 
 Plantilla base:
 
@@ -135,15 +172,15 @@ Plantilla base:
 }
 ```
 
-3. Arranca Azurite.
+1. Arranca Azurite.
 
-4. Compila el proyecto:
+1. Compila el proyecto:
 
 ```powershell
 npm run build
 ```
 
-5. Ejecuta la Function localmente:
+1. Ejecuta la Function localmente:
 
 ```powershell
 npm start
@@ -271,7 +308,7 @@ Qué hace:
 
 ## Posibles mejoras
 
-- Añadir tests automatizados para las 9 tools.
+- Añadir tests automatizados para el catalogo completo de tools.
 - Externalizar ejemplos de requests en una carpeta `examples/`.
 - Añadir logging estructurado para errores operativos.
 - Evitar incluir secretos manualmente en pruebas y documentación.

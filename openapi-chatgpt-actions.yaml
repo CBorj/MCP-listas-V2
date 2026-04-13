@@ -1,0 +1,191 @@
+openapi: 3.1.0
+info:
+  title: MCP Storage Tools API
+  version: 1.1.0
+  description: >-
+    Wrapper REST para usar el MCP desplegado en Azure Functions desde
+    ChatGPT Actions. Las consultas (solo lectura) van por GET /api/mcp/query
+    y las escrituras por POST /api/mcp/invoke.
+servers:
+  - url: https://func-mcp-tables-91600.azurewebsites.net
+    description: Azure Functions MCP endpoint
+paths:
+  /api/mcp/tools:
+    get:
+      operationId: listTools
+      summary: Listar herramientas MCP disponibles
+      description: Devuelve el catalogo de tools publicado por el MCP.
+      security:
+        - functionKey: []
+      responses:
+        '200':
+          description: Lista de herramientas MCP
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolsResponse'
+              example:
+                tools:
+                  - name: table.list
+                    description: List all tables in the storage account
+                    inputSchema:
+                      type: object
+                      properties: {}
+  /api/mcp/invoke:
+    post:
+      operationId: executeTool
+      summary: Invocar una herramienta MCP de escritura
+      description: >-
+        Invoca una tool MCP que modifica datos (create, upsert, update, delete,
+        upload, copy, move, setMetadata, etc.). ChatGPT pedira confirmacion al
+        usuario antes de ejecutar esta accion.
+      security:
+        - functionKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvokeRequest'
+            examples:
+              upsertEntity:
+                summary: Upsert en una tabla
+                value:
+                  toolName: table.upsert
+                  input:
+                    table: mcpitems
+                    partitionKey: TEST
+                    rowKey: item1
+                    properties:
+                      Nombre: Demo
+              uploadBlob:
+                summary: Subir un blob
+                value:
+                  toolName: blob.upload
+                  input:
+                    containerName: documentos
+                    blobName: demo.txt
+                    content: hola desde MCP
+                    contentType: text/plain
+      responses:
+        '200':
+          description: Resultado de la tool
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvokeResponse'
+  /api/mcp/query:
+    get:
+      operationId: queryTool
+      summary: Consultar una herramienta MCP de solo lectura
+      description: >-
+        Ejecuta una tool MCP de solo lectura (list, read, query, exists, head,
+        download, getProperties, inspect). No requiere confirmacion del usuario.
+      security:
+        - functionKey: []
+      parameters:
+        - name: toolName
+          in: query
+          required: true
+          schema:
+            type: string
+          description: >-
+            Nombre de la tool MCP de solo lectura a ejecutar.
+        - name: input
+          in: query
+          required: false
+          schema:
+            type: string
+          description: >-
+            Argumentos de entrada en formato JSON. Ejemplo: {"table":"ApkListasCompra","top":10}
+      responses:
+        '200':
+          description: Resultado de la consulta
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvokeResponse'
+              example:
+                tool: table.list
+                isError: false
+                content:
+                  - type: text
+                    text: '{"tables":["ApkListasCompra","HistoricosMenu","mcpitems"]}'
+                text: '{"tables":["ApkListasCompra","HistoricosMenu","mcpitems"]}'
+                json:
+                  tables:
+                    - ApkListasCompra
+                    - HistoricosMenu
+                    - mcpitems
+        '403':
+          description: La tool solicitada no es de solo lectura
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  message:
+                    type: string
+components:
+  securitySchemes:
+    functionKey:
+      type: apiKey
+      in: header
+      name: x-functions-key
+  schemas:
+    ToolsResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        tools:
+          type: array
+          items:
+            $ref: '#/components/schemas/ToolDefinition'
+      required: [tools]
+    ToolDefinition:
+      type: object
+      additionalProperties: true
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        inputSchema:
+          type: object
+          additionalProperties: true
+        outputSchema:
+          type: object
+          additionalProperties: true
+      required: [name]
+    InvokeRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        toolName:
+          type: string
+          description: Nombre de la tool MCP a ejecutar.
+        input:
+          type: object
+          description: Argumentos de entrada para la tool.
+          additionalProperties: true
+      required: [toolName, input]
+    InvokeResponse:
+      type: object
+      additionalProperties: true
+      properties:
+        tool:
+          type: string
+        isError:
+          type: boolean
+        content:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        text:
+          type: string
+        json:
+          type: object
+          additionalProperties: true
